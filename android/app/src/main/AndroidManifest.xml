@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!-- Needed for reading files opened with the app -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- Needed for managing all files (Android 11+) -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
     <!-- Remove media permissions from open_filex package -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove" />
@@ -129,7 +131,7 @@
 
        <provider
            android:name="com.superlist.super_native_extensions.DataProvider"
-           android:authorities="com.adilhanney.saber.SuperClipboardDataProvider"
+           android:authorities="com.adilhanney.saber.fork.SuperClipboardDataProvider"
            android:exported="true"
            android:grantUriPermissions="true" >
        </provider>
