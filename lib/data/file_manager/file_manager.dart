@@ -234,19 +234,33 @@ class FileManager {
   /// [lastModified], if specified.
   /// This is useful when downloading remote files, to make sure that the
   /// timestamp is the same locally and remotely.
+  ///
+  /// If [skipIfUnchanged] is true and the existing file has the same
+  /// content as [toWrite], the write is skipped entirely.
+  /// This avoids updating the mtime and re-triggering uploads for
+  /// unchanged assets.
   static Future<void> writeFile(
     String filePath,
     List<int> toWrite, {
     bool awaitWrite = false,
     bool alsoUpload = true,
     DateTime? lastModified,
+    bool skipIfUnchanged = false,
   }) async {
     filePath = _sanitisePath(filePath);
     log.fine('Writing to $filePath');
 
+    final file = getFile(filePath);
+
+    if (skipIfUnchanged && lastModified == null && file.existsSync()) {
+      if (await _fileMatchesBytes(file, toWrite)) {
+        log.fine('Skipping unchanged file $filePath');
+        return;
+      }
+    }
+
     await _saveFileAsRecentlyAccessed(filePath);
 
-    final file = getFile(filePath);
     await _createFileDirectory(filePath);
     Future writeFuture = Future.wait([
       file.writeAsBytes(toWrite).then((file) async {
@@ -275,6 +289,20 @@ class FileManager {
 
     writeFuture = writeFuture.then((_) => afterWrite());
     if (awaitWrite) await writeFuture;
+  }
+
+  /// Compares [bytes] with the content of [file] in chunks.
+  /// Returns true if the content is identical.
+  static Future<bool> _fileMatchesBytes(File file, List<int> bytes) async {
+    if (file.lengthSync() != bytes.length) return false;
+    var offset = 0;
+    await for (final chunk in file.openRead()) {
+      for (var i = 0; i < chunk.length; i++) {
+        if (chunk[i] != bytes[offset + i]) return false;
+      }
+      offset += chunk.length;
+    }
+    return offset == bytes.length;
   }
 
   static Future<void> createFolder(String folderPath) async {

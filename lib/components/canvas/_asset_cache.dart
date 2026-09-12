@@ -136,6 +136,9 @@ class OrderedAssetCache {
   bool get isEmpty => _cache.isEmpty;
   bool get isNotEmpty => _cache.isNotEmpty;
 
+  /// The source object at [index] (e.g. a [File] or byte list).
+  Object? sourceAt(int index) => _cache[index];
+
   /// Converts the item at position [index]
   /// to bytes and returns them.
   Future<List<int>> getBytes(int index) async {
