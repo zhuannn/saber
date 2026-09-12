@@ -87,6 +87,28 @@ class OrderedAssetCache {
   /// returns the index of the added item.
   int add<T extends Object>(T value) {
     int index = _cache.indexOf(value);
+    if (index == -1 && value is File) {
+      // File objects are compared by path, not by reference identity.
+      for (int i = 0; i < _cache.length; i++) {
+        final cacheItem = _cache[i];
+        if (cacheItem is! File) continue;
+        if (cacheItem.path != value.path) continue;
+
+        index = i;
+        break;
+      }
+    }
+    if (index == -1 && value is FileImage) {
+      // FileImage objects are compared by the underlying file path.
+      for (int i = 0; i < _cache.length; i++) {
+        final cacheItem = _cache[i];
+        if (cacheItem is! FileImage) continue;
+        if (cacheItem.file.path != value.file.path) continue;
+
+        index = i;
+        break;
+      }
+    }
     if (index == -1 && value is List<int>) {
       // Lists need to be compared per item
       final listEq = const ListEquality().equals;
