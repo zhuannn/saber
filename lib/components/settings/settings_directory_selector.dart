@@ -95,6 +95,20 @@ class DirectorySelector extends StatefulWidget {
 class _DirectorySelectorState extends State<DirectorySelector> {
   late String _directory = widget.initialDirectory;
   late var _isEmpty = true;
+  late final _pathController = TextEditingController(text: _directory);
+  var _useManualInput = false;
+
+  @override
+  void dispose() {
+    _pathController.dispose();
+    super.dispose();
+  }
+
+  void _updateDirectory(String directory) {
+    final dir = Directory(directory);
+    _directory = directory;
+    _isEmpty = dir.existsSync() ? dir.listSync().isEmpty : true;
+  }
 
   Future<void> _pickDir() async {
     final directory = await FilePicker.getDirectoryPath(
@@ -114,9 +128,8 @@ class _DirectorySelectorState extends State<DirectorySelector> {
     if (directory == null) return;
     if (directory == _directory) return;
 
-    final dir = Directory(directory);
-    _directory = directory;
-    _isEmpty = dir.existsSync() ? dir.listSync().isEmpty : true;
+    _updateDirectory(directory);
+    _pathController.text = directory;
 
     if (!mounted) return;
 
@@ -126,15 +139,20 @@ class _DirectorySelectorState extends State<DirectorySelector> {
   Future<void> _pickDefaultDir() async {
     final directory = await FileManager.getDefaultDocumentsDirectory();
 
-    final dir = Directory(directory);
-    _directory = directory;
-    _isEmpty = dir.existsSync() ? dir.listSync().isEmpty : true;
+    _updateDirectory(directory);
+    _pathController.text = directory;
 
     if (!mounted) return;
     setState(() {});
   }
 
   void _onConfirm() {
+    if (_useManualInput) {
+      final manualPath = _pathController.text.trim();
+      if (manualPath.isNotEmpty) {
+        _updateDirectory(manualPath);
+      }
+    }
     stows.customDataDir.value = _directory;
     context.pop();
   }
@@ -160,24 +178,68 @@ class _DirectorySelectorState extends State<DirectorySelector> {
           ),
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  _directory,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontFamily: 'FiraMono',
-                    fontFamilyFallback: saberMonoFontFallbacks,
-                  ),
-                ),
+              Text(t.settings.customDataDir.select),
+              ChoiceChip(
+                label: Text(t.settings.customDataDir.browse),
+                selected: !_useManualInput,
+                onSelected: (selected) {
+                  setState(() {
+                    _useManualInput = false;
+                  });
+                },
               ),
-              IconButton(icon: const Icon(Icons.folder), onPressed: _pickDir),
-              if (stows.customDataDir.value != null)
-                IconButton(
-                  icon: const Icon(Icons.undo),
-                  onPressed: _pickDefaultDir,
-                ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: Text(t.settings.customDataDir.manually),
+                selected: _useManualInput,
+                onSelected: (selected) {
+                  setState(() {
+                    _useManualInput = true;
+                  });
+                },
+              ),
             ],
           ),
+          const SizedBox(height: 8),
+          if (!_useManualInput)
+            Row(
+              children: [
+                Expanded(child: Text(_directory)),
+                IconButton(icon: const Icon(Icons.folder), onPressed: _pickDir),
+                if (stows.customDataDir.value != null)
+                  IconButton(
+                    icon: const Icon(Icons.undo),
+                    onPressed: _pickDefaultDir,
+                  ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _pathController,
+                    decoration: InputDecoration(
+                      hintText: t.settings.customDataDir.enterPath,
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    onChanged: (value) {
+                      _updateDirectory(value.trim());
+                      setState(() {});
+                    },
+                  ),
+                ),
+                if (stows.customDataDir.value != null)
+                  IconButton(
+                    icon: const Icon(Icons.undo),
+                    onPressed: () {
+                      _pickDefaultDir();
+                      _pathController.text = _directory;
+                    },
+                  ),
+              ],
+            ),
           if (emptyError)
             Text(
               t.settings.customDataDir.mustBeEmpty,

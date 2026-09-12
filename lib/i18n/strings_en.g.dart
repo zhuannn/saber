@@ -867,6 +867,13 @@ class Translations$settings$customDataDir$en {
 
 	/// en: 'This feature is currently only for developers. Using it will likely result in data loss.'
 	String get unsupported => 'This feature is currently only for developers. Using it will likely result in data loss.';
+
+    String get enterPath => 'Enter path manually';
+
+    String get manually => 'Manually';
+
+    String get browse => 'Browse';
+
 }
 
 // Path: login.form
