@@ -1,5 +1,23 @@
 # <img src="https://github.com/saber-notes/saber/raw/main/assets/icon/icon.png" width="30" height="30" alt="Logo"> Saber
 
+Forked from [saber-notes/saber](https://github.com/saber-notes/saber).
+
+My modification (With the assistance of AI):
+- Fixed the file duplicate checking logic in the `OrderedAssetCache.add()` method  
+Fixed the issue that the same PDF file would be stored multiple times. Now a PDF file with annotations will only occupy the storage space of PDF itself plus the annotations.
+
+- Add MANAGE_EXTERNAL_STORAGE permission and a fork mark in the package name  
+    - Added the `MANAGE_EXTERNAL_STORAGE` permission declaration in `AndroidManifest.xml`. It must be granted manually in advance in the Android settings.
+    - Changed the package name of the application and add the "fork" suffix
+
+- Implement the capability to manually specify a custom storage path for Android  
+Because it is still not possible to write to the custom storage directory, an input box has been added to allow for manual configuration of the absolute path. 
+
+- Remove unnecessary disk writes when the asset is not modified  
+Compares file contents before writing and skips the write if they are the same. It is very useful when only the annotations of the PDF file are modified, without altering the PDF file itself. It can reduce the cost of cloud synchronization.
+
+---
+
 [<img src='https://github.com/saber-notes/saber/blob/main/assets_raw/badges/google-play-badge.svg'
     alt='Get it on Google Play'
     height=50>][google_play]
